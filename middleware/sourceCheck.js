@@ -1,6 +1,6 @@
 module.exports = (req, res, next) => {
-  if (!req.get("authorization")) {
-    const authorization = req.cookies["Authorization"];
+  const authorization = req.cookies["signature"];
+  if (authorization !== undefined) {
     req.headers["authorization"] = `Bearer ${authorization}`;
   }
   next();

@@ -1,14 +1,29 @@
 const fs = require("fs");
-const Movie = require("../models/video");
+const Movie = require("../models/movie");
 
 exports.topVideos = (req, res, next) => {
-  Movie.find()
+  Movie.find({
+    videoType: { $in: ["series", "movie", "tvshow"] },
+  })
     .select("-fileName")
     .then((movies) => {
       res.status(200).json(movies);
     })
     .catch((err) => {
       res.status(404).json(err);
+    });
+};
+
+exports.viewEpisodes = (req, res, next) => {
+  const seriseId = req.params.id;
+  Movie.findById(seriseId)
+    .populate("episodes")
+    .then((movie) => {
+      res.status(200).json(movie);
+    })
+    .catch((err) => {
+      err.statusCode = 500;
+      next(err);
     });
 };
 

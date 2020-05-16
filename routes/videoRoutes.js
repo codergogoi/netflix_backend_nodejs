@@ -1,14 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const auth = require("../middleware/authCheck");
-const sourceCheck = require("../middleware/sourceCheck");
 
 const videoController = require("../controllers/videoController");
 
-//router.get("/movie", sourceCheck, auth, videoController.getWatchVideo);
+router.get("/movie/:id", auth, videoController.getWatchVideo);
 
-router.get("/movie/:id", videoController.getWatchVideo);
+router.get("/episodes/:id", auth, videoController.viewEpisodes);
 
-router.use("/", videoController.topVideos);
+router.use("/", auth, videoController.topVideos);
 
 module.exports = router;

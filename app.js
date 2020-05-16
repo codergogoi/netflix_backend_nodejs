@@ -9,13 +9,13 @@ const { MONGODB_URI } = require("./configs/appConst");
 /**
  * Middlewares
  */
-
+const sourceAuth = require("./middleware/sourceCheck");
 /**
  * Routes
  */
-const videoRoutes = require("./routes/videoRoutes");
 const userRoutes = require("./routes/userRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const videoRoutes = require("./routes/videoRoutes");
 
 const app = express();
 app.use(bodyParser.json({ extended: false }));
@@ -27,7 +27,7 @@ app.use("/s3_images", express.static(path.join(__dirname, "s3_images")));
 
 app.use("/admin", adminRoutes);
 app.use("/user", userRoutes);
-app.use("/watch", videoRoutes);
+app.use("/watch", sourceAuth, videoRoutes);
 
 app.use((error, req, res, next) => {
   console.log(error);

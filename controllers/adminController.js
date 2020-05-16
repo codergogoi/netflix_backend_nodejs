@@ -1,34 +1,113 @@
-const Movie = require("../models/video");
+const Movie = require("../models/movie");
+const Plan = require("../models/plan");
 
-exports.newMovie = (req, res, next) => {
-  const title = req.body.title;
-  const category = req.body.category;
-  const type = req.body.type;
-  const description = req.body.description;
-  const year = req.body.year;
-  const director = req.body.director;
-  const starring = req.body.starring;
-  const genres = req.body.genres;
-  const fileName = req.body.fileName;
-  const imageUrl = req.body.imageUrl;
-  const thumbnailUrl = req.body.thumbnailUrl;
+/**
+ * Utility Functions
+ */
+function createMovie(req) {
+  const {
+    title,
+    plot,
+    fullPlot,
+    poster,
+    thumbnail,
+    rated,
+    language,
+    cast,
+    directors,
+    genres,
+    runtime,
+    released,
+    year,
+    imdb,
+    videoType,
+    fileName,
+    categorised,
+  } = req.body;
 
-  const movie = new Movie({
+  return new Movie({
     title: title,
-    category: category,
-    type: type,
-    description: description,
-    year: year,
-    director: director,
-    starring: starring,
+    plot: plot,
+    fullPlot: fullPlot,
+    poster: poster,
+    thumbnail: thumbnail,
+    rated: rated,
+    language: language,
+    cast: cast,
+    directors: directors,
     genres: genres,
+    runtime: runtime,
+    released: released,
+    year: year,
+    imdb: imdb,
+    videoType: videoType,
     fileName: fileName,
-    imageUrl: imageUrl,
-    thumbnailUrl: thumbnailUrl,
+    categorised: categorised,
+    episodes: [],
+  });
+}
+
+/**
+ * Controller Functions
+ */
+exports.newPlan = (req, res, next) => {
+  const title = req.body.title;
+  const planType = req.body.planType;
+  const description = req.body.description;
+  const features = req.body.features;
+  const price = req.body.price;
+  const offer = req.body.offer;
+  const support = req.body.support;
+
+  let plan = new Plan({
+    title: title,
+    planType: planType,
+    description: description,
+    features: features,
+    price: price,
+    offer: offer,
+    support: support,
   });
 
+  plan
+    .save()
+    .then((result) => {
+      res.status(200).json(result);
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(503).json(err);
+    });
+};
+
+exports.newMovie = (req, res, next) => {
+  const movie = createMovie(req);
   movie
     .save()
+    .then((result) => {
+      res.status(200).json(result);
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(503).json(err);
+    });
+};
+
+exports.newEpisode = (req, res, next) => {
+  const seriesId = req.params.id;
+  const episode = createMovie(req);
+
+  let currentSeries;
+
+  Movie.findById(seriesId)
+    .then((series) => {
+      currentSeries = series;
+      return episode.save();
+    })
+    .then((savedEpisod) => {
+      currentSeries.episodes.push(savedEpisod);
+      return currentSeries.save();
+    })
     .then((result) => {
       res.status(200).json(result);
     })
