@@ -29,12 +29,9 @@ app.use("/admin", adminRoutes);
 app.use("/user", userRoutes);
 app.use("/watch", sourceAuth, videoRoutes);
 
-app.use("/", (req, res, next) => {
-  res
-    .status(403)
-    .json(
-      "Sorry! Resources Access Available with Specified authenticated end points only!"
-    );
+app.use((req, res, next) => {
+  console.log(req);
+  next();
 });
 
 app.use((error, req, res, next) => {
