@@ -30,7 +30,7 @@ app.use("/user", userRoutes);
 app.use("/watch", sourceAuth, videoRoutes);
 
 app.use((req, res, next) => {
-  console.log(req);
+  console.log(req.cookies);
   next();
 });
 
