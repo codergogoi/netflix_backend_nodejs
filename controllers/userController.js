@@ -146,14 +146,12 @@ exports.onMockLogin = (req, res, next) => {
         { expiresIn: '90d' }
       );
 
-      res
-        .status(200)
-        .json({
-          firstName: loginUser.firstName,
-          lastName: loginUser.lastName,
-          subscription: loginUser.membership,
-          profiles: loginUser.profiles,
-        });
+      res.status(200).json({
+        firstName: loginUser.firstName,
+        lastName: loginUser.lastName,
+        subscription: loginUser.membership,
+        token: token,
+      });
     })
     .catch((err) => {
       if (!err.statusCode) {
