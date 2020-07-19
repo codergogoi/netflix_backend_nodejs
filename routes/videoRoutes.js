@@ -1,14 +1,20 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const auth = require("../middleware/authCheck");
-const sourceAuth = require("../middleware/sourceCheck");
+const auth = require('../middleware/authCheck');
+const sourceAuth = require('../middleware/sourceCheck');
 
-const videoController = require("../controllers/videoController");
+const videoController = require('../controllers/videoController');
 
-router.get("/movie/:id/:auth", sourceAuth, auth, videoController.getWatchVideo);
+router.use((req, res, next) => {
+  // console.log(req);
+  next();
+});
+// router.get('/movie/:id', auth, videoController.getWatchVideo);
 
-router.get("/episodes/:id", auth, videoController.viewEpisodes);
+router.get('/movie/:id', videoController.getWatchVideo);
 
-router.use("/", auth, videoController.topVideos);
+router.get('/episodes/:id', auth, videoController.viewEpisodes);
+
+router.use('/', auth, videoController.topVideos);
 
 module.exports = router;

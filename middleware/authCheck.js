@@ -1,15 +1,15 @@
-const jwt = require("jsonwebtoken");
-const { APP_KEY } = require("../configs/appConst");
+const jwt = require('jsonwebtoken');
+const { APP_KEY } = require('../configs/appConst');
 
 module.exports = (req, res, next) => {
-  const authorization = req.get("Authorization");
+  const authorization = req.get('Authorization');
   if (!authorization) {
-    const err = new Error("Authorization error");
+    const err = new Error('Authorization error');
     err.statusCode = 401;
     throw err;
   }
 
-  const token = authorization.split(" ")[1];
+  const token = authorization.split(' ')[1];
   let decodedToken;
 
   try {
@@ -20,11 +20,12 @@ module.exports = (req, res, next) => {
   }
 
   if (!decodedToken) {
-    const err = new Error("unable  to authenticated");
+    const err = new Error('unable  to authenticated');
     err.statusCode = 401;
     throw err;
   }
 
   req.userId = decodedToken.userId;
+  console.log(`User Id ${req.userId}`);
   next();
 };

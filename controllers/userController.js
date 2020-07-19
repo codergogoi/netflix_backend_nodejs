@@ -1,11 +1,11 @@
-const mongoose = require("mongoose");
-const jwt = require("jsonwebtoken");
-const { validationResult } = require("express-validator");
-const bcrypt = require("bcryptjs");
-const { APP_KEY } = require("../configs/appConst");
+const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
+const { validationResult } = require('express-validator');
+const bcrypt = require('bcryptjs');
+const { APP_KEY } = require('../configs/appConst');
 
-const User = require("../models/user");
-const Movie = require("../models/movie");
+const User = require('../models/user');
+const Movie = require('../models/movie');
 
 /**
  * Public Access
@@ -14,10 +14,12 @@ exports.onSignup = (req, res, next) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
-    const err = new Error("Validation Erro");
-    err.statusCode = 422;
+    const err = new Error('Validation Erro');
+    // err.statusCode = 422;
+    err.message = 'Email Id already Exist. Please login using your password!';
     err.data = errors.array();
-    throw err;
+    next(err);
+    return;
   }
 
   let email = req.body.email;
@@ -41,7 +43,7 @@ exports.onSignup = (req, res, next) => {
         profiles: [
           {
             title: firstName,
-            category: "Adult",
+            category: 'Adult',
             choice: null,
           },
         ],
@@ -50,7 +52,7 @@ exports.onSignup = (req, res, next) => {
       return user.save();
     })
     .then((result) => {
-      res.status(201).json({ msg: "Signup Successfully!", userId: result._id });
+      res.status(201).json({ msg: 'Signup Successfully!', userId: result._id });
     })
     .catch((err) => {
       if (!err.statusCode) {
@@ -66,7 +68,7 @@ exports.onLogin = (req, res, next) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
-    const err = new Error("Validation Erro");
+    const err = new Error('Validation Erro');
     err.statusCode = 422;
     err.data = errors.array();
     throw err;
@@ -78,7 +80,7 @@ exports.onLogin = (req, res, next) => {
   User.findOne({ email: email })
     .then((user) => {
       if (!user) {
-        const err = new Error("User Does not exist with the provided email ID");
+        const err = new Error('User Does not exist with the provided email ID');
         err.statusCode = 401;
         throw err;
       }
@@ -87,7 +89,7 @@ exports.onLogin = (req, res, next) => {
     })
     .then((result) => {
       if (!result) {
-        const err = new Error("Passwod does not match!");
+        const err = new Error('Passwod does not match!');
         err.statusCode = 401;
         throw err;
       }
@@ -95,10 +97,63 @@ exports.onLogin = (req, res, next) => {
       const token = jwt.sign(
         { userId: loginUser._id.toString(), email: loginUser.email },
         APP_KEY,
-        { expiresIn: "90d" }
+        { expiresIn: '90d' }
       );
 
       res.status(200).json(token);
+    })
+    .catch((err) => {
+      if (!err.statusCode) {
+        err.statusCode = 500;
+      }
+      next(err);
+    });
+};
+
+exports.onMockLogin = (req, res, next) => {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    const err = new Error('Validation Erro');
+    err.statusCode = 422;
+    err.data = errors.array();
+    throw err;
+  }
+
+  let email = req.body.email;
+  let password = req.body.password;
+  let loginUser = null;
+  User.findOne({ email: email })
+    .then((user) => {
+      if (!user) {
+        const err = new Error('User Does not exist with the provided email ID');
+        err.statusCode = 401;
+        throw err;
+      }
+      loginUser = user;
+      return bcrypt.compare(password, user.password);
+    })
+    .then((result) => {
+      if (!result) {
+        const err = new Error('Passwod does not match!');
+        err.statusCode = 401;
+        throw err;
+      }
+
+      const token = jwt.sign(
+        { userId: loginUser._id.toString(), email: loginUser.email },
+        APP_KEY,
+        { expiresIn: '90d' }
+      );
+
+      res
+        .status(200)
+        .json({
+          firstName: loginUser.firstName,
+          lastName: loginUser.lastName,
+          subscription: loginUser.membership,
+          profiles: loginUser.profiles,
+        });
     })
     .catch((err) => {
       if (!err.statusCode) {
@@ -136,7 +191,7 @@ exports.onAddProfile = (req, res, next) => {
     .then((result) => {
       result.profiles.push({
         title: title,
-        category: isKids ? "Kid" : "Adult",
+        category: isKids ? 'Kid' : 'Adult',
         choice: null,
       });
       return result.save();
@@ -208,7 +263,7 @@ exports.onDeleteProfile = (req, res, next) => {
 exports.viewWatchlist = (req, res, next) => {
   const userId = req.userId;
   User.findById(userId)
-    .populate("wishlist")
+    .populate('wishlist')
     .then((movies) => {
       res.json(movies.wishlist);
     })
@@ -226,13 +281,21 @@ exports.addToWatchlist = (req, res, next) => {
   const movieId = req.params.id;
   let currentUser;
   User.findById(userId)
-    .populate("wishlist")
+    .populate('wishlist')
     .then((user) => {
       currentUser = user;
       return Movie.findById(movieId);
     })
     .then((movie) => {
-      currentUser.wishlist.push(movie);
+      let isExist = false;
+      currentUser.wishlist.map((item) => {
+        if (item._id.toString() === movieId.toString()) {
+          isExist = true;
+        }
+      });
+      if (!isExist) {
+        currentUser.wishlist.push(movie);
+      }
       return currentUser.save();
     })
     .then((result) => {
@@ -251,7 +314,7 @@ exports.removeWatchlist = (req, res, next) => {
   const userId = req.userId;
   const movieId = req.params.id;
   User.findById(userId)
-    .populate("wishlist")
+    .populate('wishlist')
     .then((user) => {
       user.wishlist.remove(movieId);
       return user.save();

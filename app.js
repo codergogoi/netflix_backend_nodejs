@@ -29,11 +29,6 @@ app.use("/admin", adminRoutes);
 app.use("/user", userRoutes);
 app.use("/watch", videoRoutes);
 
-// app.use((req, res, next) => {
-//   console.log(req);
-//   next();
-// });
-
 app.use((error, req, res, next) => {
   console.log(error);
   const status = error.statusCode || 500;

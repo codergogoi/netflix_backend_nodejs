@@ -1,11 +1,13 @@
-const fs = require("fs");
-const Movie = require("../models/movie");
+const fs = require('fs');
+const Movie = require('../models/movie');
+const zlib = require('zlib');
+const { pipeline } = require('stream');
 
 exports.topVideos = (req, res, next) => {
   Movie.find({
-    videoType: { $in: ["series", "movie", "tvshow"] },
+    videoType: { $in: ['series', 'movie', 'tvshow'] },
   })
-    .select("-fileName")
+    .select('-fileName')
     .then((movies) => {
       res.status(200).json(movies);
     })
@@ -17,7 +19,7 @@ exports.topVideos = (req, res, next) => {
 exports.viewEpisodes = (req, res, next) => {
   const seriseId = req.params.id;
   Movie.findById(seriseId)
-    .populate("episodes")
+    .populate('episodes')
     .then((movie) => {
       res.status(200).json(movie);
     })
@@ -27,36 +29,41 @@ exports.viewEpisodes = (req, res, next) => {
     });
 };
 
-exports.getWatchVideo = async (req, res, next) => {
+exports.getWatchVideo = (req, res, next) => {
   const movie_id = req.params.id;
 
-  const movie = await Movie.findById(movie_id);
+  Movie.findById(movie_id)
+    .then((movie) => {
+      if (movie._id) {
+        const path = 's3_videos/' + movie.fileName;
+        const stat = fs.statSync(path);
+        const fileSize = stat.size;
+        const range = req.headers.range;
+        if (range) {
+          const parts = range.replace(/bytes=/, '').split('-');
+          const start = parseInt(parts[0], 10);
+          const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+          const chunkSize = end - start + 1;
+          const file = fs.createReadStream(path, { start, end });
+          const head = {
+            'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+            'Accept-Range': 'bytes',
+            'Content-Length': chunkSize,
+            'Content-Type': 'video/mp4',
+          };
 
-  if (movie._id) {
-    const path = "s3_videos/" + movie.fileName;
-    const stat = fs.statSync(path);
-    const fileSize = stat.size;
-    const range = req.headers.range;
-    if (range) {
-      const parts = range.replace(/bytes=/, "").split("-");
-      const start = parseInt(parts[0], 10);
-      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-      const chunkSize = end - start + 1;
-      const file = fs.createReadStream(path, { start, end });
-
-      const head = {
-        "Content-Range": `bytes ${start}-${end}/${fileSize}`,
-        "Accept-Range": "bytes",
-        "Content-Length": chunkSize,
-        "Content-Type": "video/mp4",
-      };
-
-      res.writeHead(206, head);
-      file.pipe(res);
-    } else {
-      res.status(404).json("Movie file Does not exist");
-    }
-  } else {
-    res.status(404).json("Movie Does not exist");
-  }
+          res.writeHead(206, head);
+          file.pipe(res);
+        } else {
+          res.status(404).json('Movie file Does not exist');
+        }
+      } else {
+        res.status(404).json('Movie Does not exist');
+      }
+    })
+    .catch((err) => {
+      console.log('err' + err);
+      res.status(404).json('Movie file Does not exist');
+    });
+  // const movie = await Movie.findById(movie_id);
 };
