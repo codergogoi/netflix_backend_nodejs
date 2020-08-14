@@ -15,6 +15,6 @@ router.get('/movie/:id', videoController.getWatchVideo);
 
 router.get('/episodes/:id', auth, videoController.viewEpisodes);
 
-router.use('/', auth, videoController.topVideos);
+router.use('/', videoController.topVideos);
 
 module.exports = router;
