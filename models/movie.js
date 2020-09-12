@@ -49,6 +49,17 @@ const MovieSchema = new Schema({
   categorised: {
     type: String,
   },
-});
+  
+},
+{
+  toJSON: {
+    transform: function (doc, ret) {
+      ret.thumbnail = "https://netflix-example.herokuapp.com/s3_images/"+ret.thumbnail,
+      ret.poster = "https://netflix-example.herokuapp.com/s3_images/"+ret.poster
+
+    }
+  }
+}
+);
 
 module.exports = mongoose.model("Movie", MovieSchema);

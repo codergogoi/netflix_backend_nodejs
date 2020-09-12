@@ -2,6 +2,7 @@ const fs = require('fs');
 const Movie = require('../models/movie');
 const zlib = require('zlib');
 const { pipeline } = require('stream');
+const movie = require('../models/movie');
 
 exports.topVideos = (req, res, next) => {
   Movie.find({
@@ -9,7 +10,7 @@ exports.topVideos = (req, res, next) => {
   })
     .select('-fileName')
     .then((movies) => {
-      res.status(200).json(movies);
+        res.status(200).json(movies);
     })
     .catch((err) => {
       res.status(404).json(err);
